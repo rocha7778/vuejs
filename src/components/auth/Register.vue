@@ -4,13 +4,13 @@
 
 		<form class="ui form" v-on:submit.prevent="register">
 			<div class="field">
-				<input type="text" v-model="formRegister.email" name="email" id="email" placeholder="email">
+				<input type="text" v-model="formRegister.email" name="email" id="email" placeholder="email" :class="{error : formError.email}">
 			</div>
 			<div class="field">
-				<input type="password" v-model="formRegister.password" name="password" id="password" placeholder="password">
+				<input type="password" v-model="formRegister.password" name="password" id="password" placeholder="password" :class="{error : formError.password}">
 			</div>
 			<div class="field">
-				<input type="password" v-model="formRegister.password2" name="password2" id="password2" placeholder="confirm password">
+				<input type="password" v-model="formRegister.repeatPassword" name="repeatPassword" id="repeatPassword" placeholder="confirm password" :class="{error : formError.repeatPassword}">
 			</div>
 			<button type="submit" class="ui button positive">
 				Register
@@ -22,6 +22,9 @@
 </template>
 
 <script>
+import * as Yup from "yup"
+import { ref } from "vue"
+
 export default {
 	name: "Register",
 	props : {
@@ -30,28 +33,43 @@ export default {
 
 	setup(){
 
+		
+		const schemaForm = Yup.object().shape({
+			email : Yup.string().email(true).required(true),
+			password : Yup.string().required(true),
+			repeatPassword : Yup.string().required(true).oneOf([Yup.ref('password')],true)
+		})
+
 		let formRegister = {
 			email : '',
 			password: '',
-			password2:''
-
-
+			repeatPassword:''
 		}
 
-		const register = ()=> {
-			console.log(formRegister);
+		let formError = ref({})
+
+		const register = async ()=> {
+
+			formError.value = {}
+			try {
+
+				await schemaForm.validate(formRegister,{abortEarly:false})
+				console.log("Ok")
+				
+			} catch (error) {
+
+				error.inner.forEach(error => {
+					formError.value[error.path] = error.message
+				});
+
+			}
 
 		}
-
 		return {
 			formRegister,
-			register
-			
-
+			register,
+			formError
 		}
-
-
-
 	}
 }
 </script>
